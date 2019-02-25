@@ -1,5 +1,6 @@
-# Aliyun_oss_archive
-###Basic Operations:
+# Aliyun OSS Archive
+### Basic Operations:
+
 >dir: show current dir's contents  
 
 usage: >dir
@@ -25,7 +26,8 @@ usage: dl &lt;remote_path> &lt;local_path>
 
 usage: info
 
-###Configuration File: config.json  
+### Configuration File: config.json  
+
 * 'access_key_id': <access_key_id>,  
 * 'access_key_secret': <access_key_secret>,  
 * 'endpoint': <endpoint>,  
