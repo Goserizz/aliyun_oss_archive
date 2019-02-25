@@ -14,17 +14,22 @@ def percentage(consumed_bytes, total_bytes):
 
 class OSS:
 
-    def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name):
+    def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
         print('connecting to server...')
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
         print('connected.')
+        if not default_path.endswith('/'):
+            self.default_path = default_path + '/'
+        else:
+            self.default_path = default_path
         self.path = []
         self.objects = dict()
         print('Downloading catalogs...')
         for obj in oss2.ObjectIterator(self.bucket):
             self.append_object(obj.key)
         print('Downloaded.\n')
+        self.bucket_info = self.bucket.get_bucket_info()
 
     def append_object(self, object_name):
         dic = self.objects
@@ -62,6 +67,8 @@ class OSS:
                 self.upload_file(object_name, now_path)
 
     def upload(self, object_name, path):
+        if not path.startswith('/'):
+            path = self.default_path + path
         if os.path.isfile(path):
             self.upload_file(object_name, path)
         else:
@@ -91,6 +98,8 @@ class OSS:
     def download(self, object_name, path):
         dic = self.objects
         now_name = []
+        if not path.startswith('/'):
+            path = self.default_path + path
         if os.path.isfile(path):
             print_err('Invalid local path.', file=sys.stderr)
             return
@@ -119,14 +128,13 @@ class OSS:
             self.download_file('/'.join(now_name), path + '/' + now_name[-1])
 
     def print_bucket_info(self):
-        bucket_info = self.bucket.get_bucket_info()
-        print('name: ' + bucket_info.name)
-        print('storage class: ' + bucket_info.storage_class)
-        print('creation date: ' + bucket_info.creation_date)
-        print('intranet_endpoint: ' + bucket_info.intranet_endpoint)
-        print('extranet_endpoint ' + bucket_info.extranet_endpoint)
-        print('owner: ' + bucket_info.owner.id)
-        print('grant: ' + bucket_info.acl.grant)
+        print('name: ' + self.bucket_info.name)
+        print('storage class: ' + self.bucket_info.storage_class)
+        print('creation date: ' + self.bucket_info.creation_date)
+        print('intranet_endpoint: ' + self.bucket_info.intranet_endpoint)
+        print('extranet_endpoint ' + self.bucket_info.extranet_endpoint)
+        print('owner: ' + self.bucket_info.owner.id)
+        print('grant: ' + self.bucket_info.acl.grant)
 
     def print_dir(self):
         dic = self.objects
