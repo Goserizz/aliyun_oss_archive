@@ -1,4 +1,6 @@
-import oss2, sys, os
+import oss2
+import sys
+import os
 
 
 def print_err(*args, **kwargs):
