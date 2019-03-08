@@ -6,7 +6,6 @@ import os
 def print_err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-
 def percentage(consumed_bytes, total_bytes):
     if total_bytes:
         rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
@@ -144,7 +143,7 @@ class OSS:
             dic = dic[_slice]
         for elem in dic:
             if dic[elem]:
-                print(elem + '/')
+                print('\033[0;36m' + elem + '\033[0m/')
             else:
                 print(elem)
 
@@ -153,6 +152,9 @@ class OSS:
             if directory == '..':
                 self.path.remove(self.path[len(self.path) - 1])
                 return
+        if directory == '~':
+            self.path = []
+            return
         dic = self.objects
         temp = []
         if directory.startswith('/'):
@@ -195,22 +197,23 @@ class OSS:
 
     def remove(self, object_name):
         dic = self.objects
-        new_name = []
-        for _slice in self.path:
-            dic = dic[_slice]
-            new_name.append(_slice)
+        remote_name = []
+        if not object_name.startswith('/'):
+            for _slice in self.path:
+                dic = dic[_slice]
+                remote_name.append(_slice)
         for _slice in object_name.split('/'):
             if _slice:
                 if _slice in dic:
-                    old = dic
-                    old_slice = _slice
+                    last_dic = dic
+                    last_slice = _slice
                     dic = dic[_slice]
-                    new_name.append(_slice)
+                    remote_name.append(_slice)
                 else:
                     print('Invalid Path')
                     return
-        self.remove_directory_file(dic, new_name)
-        old.pop(old_slice)
+        self.remove_directory_file(dic, remote_name)
+        last_dic.pop(last_slice)
 
     def now_path(self):
         return '/'.join(self.path)

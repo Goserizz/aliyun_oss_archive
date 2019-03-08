@@ -9,7 +9,19 @@ oss.print_dir()
 
 while 1:
     print(oss.bucket_info.name, end=' ')
-    indict = input(oss.now_path() + '>').split(' ')
+    indict = input('\033[0;32m~/' + oss.now_path() + '\033[0m>').split(' ')
+
+    new_indict = []
+    i = 0
+    while i < len(indict):
+        j = i + 1
+        while indict[i].endswith('\\') and j < len(indict):
+            indict[i] = indict[i][0:-1] + ' ' + indict[j]
+            j += 1
+        new_indict.append(indict[i])
+        i = j
+    indict = new_indict
+
     if indict[0] == 'dir':
         oss.print_dir()
     elif indict[0] == 'cd':
@@ -20,12 +32,11 @@ while 1:
             oss.upload(oss.now_path(), indict[1])
     elif indict[0] == 'rm':
         if len(indict) == 2:
-            if indict[1].startswith('/'):
-                print('Can only remove file/dir in current dir.')
-            else:
-                oss.remove(indict[1])
+            oss.remove(indict[1])
     elif indict[0] == 'dl':
         if len(indict) == 3:
             oss.download(indict[1], indict[2])
+        elif len(indict) == 2:
+            oss.download(indict[1], oss.default_path)
     elif indict[0] == 'info':
         oss.print_bucket_info()
