@@ -13,7 +13,7 @@ usage: >cd &lt;dir>
 
 usage: ul &lt;remote_path> &lt;local_path>  
 
->rm: remove directory or file in current remote dir  
+>rm: remove directory or file 
 
 usage: rm &lt;remote_path>
 
@@ -32,4 +32,4 @@ usage: info
 * 'access_key_secret': <access_key_secret>,  
 * 'endpoint': <endpoint>,  
 * 'bucket_name': <bucket_name>,  
-* 'default_path': <default_path> # used for local path not started with '/'<br>
+* 'default_path': <default_path> # used for local path not started with '/'
