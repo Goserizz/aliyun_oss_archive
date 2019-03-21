@@ -1,35 +1,59 @@
-import oss2
-import sys
+import json
 import os
+import sys
+
+import oss2
+from termcolor import colored
+
+config_path = '/etc/oss/config.json'
 
 
 def print_err(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    print(colored(*args, 'red'), file=sys.stderr, **kwargs)
+
+
+def print_folder(*args, **kwargs):
+    print(colored(*args, 'yellow'), **kwargs)
+
+
+def input_confirm(*args):
+    tf = ''
+    while tf != 't' and tf != 'f':
+        tf = input(colored(*args, 'green'))
+    if tf == 't':
+        return True
+    else:
+        return False
+
+
+def print_info(*args, **kwargs):
+    print(colored(*args, 'cyan'), **kwargs)
+
 
 def percentage(consumed_bytes, total_bytes):
     if total_bytes:
         rate = int(100 * (float(consumed_bytes) / float(total_bytes)))
-        print('\r{0}% '.format(rate), end='')
+        print_info('\r{0}% '.format(rate), end='')
         sys.stdout.flush()
 
 
 class OSS:
 
     def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
-        print('connecting to server...')
+        print_info('connecting to server...')
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
-        print('connected.')
+        print_info('connected.')
         if not default_path.endswith('/'):
             self.default_path = default_path + '/'
         else:
             self.default_path = default_path
         self.path = []
         self.objects = dict()
-        print('Downloading catalogs...')
+        print_info('Downloading catalogs...')
         for obj in oss2.ObjectIterator(self.bucket):
             self.append_object(obj.key)
-        print('Downloaded.\n')
+        print_info('Downloaded.\n')
         self.bucket_info = self.bucket.get_bucket_info()
 
     def append_object(self, object_name):
@@ -47,7 +71,7 @@ class OSS:
             object_name = object_name + '/' + os.path.basename(path)
         else:
             object_name = os.path.basename(path)
-        print(path)
+        print_info(path)
         self.bucket.put_object_from_file(object_name, path, progress_callback=percentage)
         print('')
         self.append_object(object_name)
@@ -70,6 +94,8 @@ class OSS:
     def upload(self, object_name, path):
         if not path.startswith('/'):
             path = self.default_path + path
+        if not object_name.startswith('/') and self.now_path():
+            object_name = self.now_path() + '/' + object_name
         if os.path.isfile(path):
             self.upload_file(object_name, path)
         else:
@@ -81,7 +107,7 @@ class OSS:
             self.upload_directory(object_name, path)
 
     def download_file(self, object_name, path):
-        print(path)
+        print_info(path)
         self.bucket.get_object_to_file(object_name, path, progress_callback=percentage)
         print('')
 
@@ -129,13 +155,13 @@ class OSS:
             self.download_file('/'.join(now_name), path + '/' + now_name[-1])
 
     def print_bucket_info(self):
-        print('name: ' + self.bucket_info.name)
-        print('storage class: ' + self.bucket_info.storage_class)
-        print('creation date: ' + self.bucket_info.creation_date)
-        print('intranet_endpoint: ' + self.bucket_info.intranet_endpoint)
-        print('extranet_endpoint ' + self.bucket_info.extranet_endpoint)
-        print('owner: ' + self.bucket_info.owner.id)
-        print('grant: ' + self.bucket_info.acl.grant)
+        print_info('name: ' + self.bucket_info.name)
+        print_info('storage class: ' + self.bucket_info.storage_class)
+        print_info('creation date: ' + self.bucket_info.creation_date)
+        print_info('intranet_endpoint: ' + self.bucket_info.intranet_endpoint)
+        print_info('extranet_endpoint ' + self.bucket_info.extranet_endpoint)
+        print_info('owner: ' + self.bucket_info.owner.id)
+        print_info('grant: ' + self.bucket_info.acl.grant)
 
     def print_dir(self):
         dic = self.objects
@@ -143,7 +169,7 @@ class OSS:
             dic = dic[_slice]
         for elem in dic:
             if dic[elem]:
-                print('\033[0;36m' + elem + '\033[0m/')
+                print_folder(elem)
             else:
                 print(elem)
 
@@ -210,10 +236,85 @@ class OSS:
                     dic = dic[_slice]
                     remote_name.append(_slice)
                 else:
-                    print('Invalid Path')
+                    print_err('Invalid Path')
                     return
         self.remove_directory_file(dic, remote_name)
         last_dic.pop(last_slice)
 
     def now_path(self):
         return '/'.join(self.path)
+
+    def sync(self, sync_file):
+        with open(config_path, 'r') as f:
+            load_dic = json.load(f)
+        if not 'files' in load_dic.keys():
+            return
+        files = load_dic['files']
+        if not sync_file:
+            if not input_confirm('Are you sure to start sync?(t/f)'):
+                return
+            for file in files.keys():
+                self.upload(files[file], file)
+        else:
+            if not sync_file.startswith('/'):
+                sync_file = self.default_path + sync_file
+            if not sync_file in files.keys():
+                print_err('No such sync file. Check your spelling or use <set>.')
+            else:
+                if not input_confirm('Are you sure to start sync?(t/f)'):
+                    return
+                self.upload(files[sync_file], sync_file)
+
+    def set_sync(self, path, remote_path):
+        with open(config_path, 'r') as f:
+            load_dic = json.load(f)
+        if not 'files' in load_dic.keys():
+            load_dic['files'] = {}
+        files = load_dic['files']
+        if not path.startswith('/'):
+            path = self.default_path + path
+        if not os.path.isfile(path):
+            try:
+                os.chdir(path)
+            except FileNotFoundError:
+                print_err('No such file or directory.')
+                return
+        if remote_path.startswith('/'):
+            remote_path = remote_path[1:]
+        else:
+            remote_path = self.now_path() + '/' + remote_path
+        if path in files.keys() and files[path] != remote_path:
+            if input_confirm(path + ' is already exist. Are you sure to change its remote path(' + files[path] + ')?(t/f)'):
+                files[path] = remote_path
+        else:
+            files[path] = remote_path
+        with open(config_path, 'w') as f:
+            json.dump(load_dic, f)
+        if not remote_path:
+            remote_path = '/'
+        print_info('<local>' + path + ' <remote>' + remote_path)
+
+    def disable_sync(self, path):
+        with open(config_path, 'r') as f:
+            load_dic = json.load(f)
+        if not 'files' in load_dic:
+            print_err('No sync file found. Try to use <set>.')
+        else:
+            if not path.startswith('/'):
+                path = self.default_path + path
+            if not path in load_dic['files']:
+                print_err('No such sync file. Check your spelling or use <set>.')
+            else:
+                if input_confirm('You are trying to disable <local>:' + path + ' <remote>:' + load_dic['files'][path] + '. Are you sure?(t/f)'):
+                    load_dic['files'].pop(path)
+        with open(config_path, 'w') as f:
+            json.dump(load_dic, f)
+
+    def print_sync_info(self):
+        with open(config_path, 'r') as f:
+            load_dic = json.load(f)
+        if 'files' in load_dic:
+            for file in load_dic['files'].keys():
+                print_info('<local>: ' + file + ' <remote>: ' + load_dic['files'][file])
+        else:
+            print_err('No sync file found. Try to use <set>.')
