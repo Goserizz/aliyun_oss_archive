@@ -2,14 +2,18 @@ from OSS_api import *
 import json
 
 
-with open("/etc/oss/config.json", "r") as f:
+config_path = get_config_path()
+with open(config_path, "r") as f:
     load_dic = json.load(f)
 oss = OSS(load_dic['access_key_id'], load_dic['access_key_secret'], load_dic['endpoint'], load_dic['bucket_name'], load_dic['default_path'])
 oss.print_dir()
 
 while 1:
     print(oss.bucket_info.name, end=' ')
-    indict = input('\033[0;32m~/' + oss.now_path() + '\033[0m>').split(' ')
+    if os_name != 'Windows':
+        indict = input('\033[0;32m~/' + oss.now_path() + '\033[0m>').split(' ')
+    else:
+        indict = input('~/' + oss.now_path() + '>').split(' ')
 
     new_indict = []
     i = 0

@@ -8,25 +8,29 @@ from termcolor import colored
 
 os_name = platform.system()
 slash = os.sep
-if os_name == 'Darwin' or os_name == 'Linux':
-    config_path = '/etc/oss/config.json'
-elif os_name == 'Windwos':
-    config_path = 'config.json'
-else:
-    print_err('What the hell os you are using?')
+
 
 def print_err(*args, **kwargs):
-    print(colored(*args, 'red'), file=sys.stderr, **kwargs)
+    if os_name != 'Windows':
+        print(colored(*args, 'red'), file=sys.stderr, **kwargs)
+    else:
+        print(*args, **kwargs)
 
 
 def print_folder(*args, **kwargs):
-    print(colored(*args, 'yellow'), **kwargs)
+    if os_name != 'Windows':
+        print(colored(*args, 'yellow'), **kwargs)
+    else:
+        print(*args, **kwargs)
 
 
 def input_confirm(*args):
     tf = ''
     while tf != 't' and tf != 'f':
-        tf = input(colored(*args, 'green'))
+        if os_name != 'Windows':
+            tf = input(colored(*args, 'green'))
+        else:
+            tf = input(*args)
     if tf == 't':
         return True
     else:
@@ -34,7 +38,10 @@ def input_confirm(*args):
 
 
 def print_info(*args, **kwargs):
-    print(colored(*args, 'cyan'), **kwargs)
+    if os_name != 'Windows':
+        print(colored(*args, 'cyan'), **kwargs)
+    else:
+        print(*args, **kwargs)
 
 
 def percentage(consumed_bytes, total_bytes):
@@ -57,9 +64,20 @@ def is_abs_add(address):
             return False
 
 
+def get_config_path():
+    if os_name == 'Darwin' or os_name == 'Linux':
+        return '/etc/oss/config.json'
+    elif os_name == 'Windows':
+        return 'config.json'
+    else:
+        print_err('What the hell os you are using?')
+        return
+
+
 class OSS:
 
     def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
+        self.config_path = get_config_path()
         print_info('connecting to server...')
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
@@ -88,7 +106,7 @@ class OSS:
 
     def upload_file(self, object_name, path):
         if object_name:
-            object_name = object_name + slash + os.path.basename(path)
+            object_name = object_name + '/' + os.path.basename(path)
         else:
             object_name = os.path.basename(path)
         print_info(path)
@@ -124,6 +142,9 @@ class OSS:
             except FileNotFoundError:
                 print_err('No such file or directory.')
                 return
+            except OSError:
+                print_err('Invalid grammar.')
+                return
             self.upload_directory(object_name, path)
 
     def download_file(self, object_name, path):
@@ -140,12 +161,12 @@ class OSS:
                 now_name.append(_slice)
                 self.download_dir(dic[_slice], now_name, path + slash + _slice)
             else:
-                self.download_file(slash.join(object_name) + slash + _slice, path + slash + _slice)
+                self.download_file('/'.join(object_name) + '/' + _slice, path + slash + _slice)
 
     def download(self, object_name, path):
         dic = self.objects
         now_name = []
-        if not path.startswith(slash):
+        if not is_abs_add(path):
             path = self.default_path + path
         if os.path.isfile(path):
             print_err('Invalid local path.', file=sys.stderr)
@@ -157,11 +178,11 @@ class OSS:
         except FileNotFoundError:
             print_err('Invalid local path.')
             return
-        if not object_name.startswith(slash):
+        if not object_name.startswith('/'):
             for _slice in self.path:
                 dic = dic[_slice]
                 now_name.append(_slice)
-        for _slice in object_name.split(slash):
+        for _slice in object_name.split('/'):
             if _slice:
                 if _slice in dic.keys():
                     dic = dic[_slice]
@@ -172,7 +193,7 @@ class OSS:
         if dic:
             self.download_dir(dic, now_name, path + slash + now_name[-1])
         else:
-            self.download_file(slash.join(now_name), path + slash + now_name[-1])
+            self.download_file('/'.join(now_name), path + slash + now_name[-1])
 
     def print_bucket_info(self):
         print_info('name: ' + self.bucket_info.name)
@@ -189,7 +210,7 @@ class OSS:
             dic = dic[_slice]
         for elem in dic:
             if dic[elem]:
-                print_folder(elem)
+                print_folder(elem + '/')
             else:
                 print(elem)
 
@@ -203,7 +224,7 @@ class OSS:
             return
         dic = self.objects
         temp = []
-        if directory.startswith(slash):
+        if directory.startswith('/'):
             for _slice in directory.split('/'):
                 if _slice != '':
                     if _slice in dic.keys():
@@ -265,7 +286,7 @@ class OSS:
         return '/'.join(self.path)
 
     def sync(self, sync_file):
-        with open(config_path, 'r') as f:
+        with open(self.config_path, 'r') as f:
             load_dic = json.load(f)
         if not 'files' in load_dic.keys():
             return
@@ -276,7 +297,7 @@ class OSS:
             for file in files.keys():
                 self.upload(files[file], file)
         else:
-            if not sync_file.startswith('/'):
+            if not is_abs_add(sync_file):
                 sync_file = self.default_path + sync_file
             if not sync_file in files.keys():
                 print_err('No such sync file. Check your spelling or use <set>.')
@@ -286,12 +307,12 @@ class OSS:
                 self.upload(files[sync_file], sync_file)
 
     def set_sync(self, path, remote_path):
-        with open(config_path, 'r') as f:
+        with open(self.config_path, 'r') as f:
             load_dic = json.load(f)
         if not 'files' in load_dic.keys():
             load_dic['files'] = {}
         files = load_dic['files']
-        if not path.startswith('/'):
+        if not is_abs_add(path):
             path = self.default_path + path
         if not os.path.isfile(path):
             try:
@@ -308,30 +329,30 @@ class OSS:
                 files[path] = remote_path
         else:
             files[path] = remote_path
-        with open(config_path, 'w') as f:
+        with open(self.config_path, 'w') as f:
             json.dump(load_dic, f)
         if not remote_path:
             remote_path = '/'
         print_info('<local>' + path + ' <remote>' + remote_path)
 
     def disable_sync(self, path):
-        with open(config_path, 'r') as f:
+        with open(self.config_path, 'r') as f:
             load_dic = json.load(f)
         if not 'files' in load_dic:
             print_err('No sync file found. Try to use <set>.')
         else:
-            if not path.startswith('/'):
+            if not is_abs_add(path):
                 path = self.default_path + path
             if not path in load_dic['files']:
                 print_err('No such sync file. Check your spelling or use <set>.')
             else:
                 if input_confirm('You are trying to disable <local>:' + path + ' <remote>:' + load_dic['files'][path] + '. Are you sure?(t/f)'):
                     load_dic['files'].pop(path)
-        with open(config_path, 'w') as f:
+        with open(self.config_path, 'w') as f:
             json.dump(load_dic, f)
 
     def print_sync_info(self):
-        with open(config_path, 'r') as f:
+        with open(self.config_path, 'r') as f:
             load_dic = json.load(f)
         if 'files' in load_dic:
             for file in load_dic['files'].keys():
