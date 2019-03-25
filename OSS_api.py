@@ -1,12 +1,19 @@
 import json
 import os
 import sys
-
+import platform
 import oss2
 from termcolor import colored
 
-config_path = '/etc/oss/config.json'
 
+os_name = platform.system()
+slash = os.sep
+if os_name == 'Darwin' or os_name == 'Linux':
+    config_path = '/etc/oss/config.json'
+elif os_name == 'Windwos':
+    config_path = 'config.json'
+else:
+    print_err('What the hell os you are using?')
 
 def print_err(*args, **kwargs):
     print(colored(*args, 'red'), file=sys.stderr, **kwargs)
@@ -37,6 +44,19 @@ def percentage(consumed_bytes, total_bytes):
         sys.stdout.flush()
 
 
+def is_abs_add(address):
+    if os_name == 'Darwin' or os_name == 'Linux':
+        if address.startswith('/'):
+            return True
+        else:
+            return False
+    else:
+        if address[1:3] == ':\\':
+            return True
+        else:
+            return False
+
+
 class OSS:
 
     def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
@@ -44,8 +64,8 @@ class OSS:
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
         print_info('connected.')
-        if not default_path.endswith('/'):
-            self.default_path = default_path + '/'
+        if not default_path.endswith(slash):
+            self.default_path = default_path + slash
         else:
             self.default_path = default_path
         self.path = []
@@ -68,7 +88,7 @@ class OSS:
 
     def upload_file(self, object_name, path):
         if object_name:
-            object_name = object_name + '/' + os.path.basename(path)
+            object_name = object_name + slash + os.path.basename(path)
         else:
             object_name = os.path.basename(path)
         print_info(path)
@@ -77,12 +97,12 @@ class OSS:
         self.append_object(object_name)
 
     def upload_directory(self, object_name, path):
-        if not path.endswith('/'):
+        if not path.endswith(slash):
             if object_name:
-                object_name = object_name + '/' + os.path.basename(path)
+                object_name = object_name + slash + os.path.basename(path)
             else:
                 object_name = os.path.basename(path)
-            path += '/'
+            path += slash
         os.chdir(path)
         for elem in os.listdir():
             now_path = path + elem
@@ -92,7 +112,7 @@ class OSS:
                 self.upload_file(object_name, now_path)
 
     def upload(self, object_name, path):
-        if not path.startswith('/'):
+        if not is_abs_add(path):
             path = self.default_path + path
         if not object_name.startswith('/') and self.now_path():
             object_name = self.now_path() + '/' + object_name
@@ -118,30 +138,30 @@ class OSS:
             if dic[_slice]:
                 now_name = object_name.copy()
                 now_name.append(_slice)
-                self.download_dir(dic[_slice], now_name, path + '/' + _slice)
+                self.download_dir(dic[_slice], now_name, path + slash + _slice)
             else:
-                self.download_file('/'.join(object_name) + '/' + _slice, path + '/' + _slice)
+                self.download_file(slash.join(object_name) + slash + _slice, path + slash + _slice)
 
     def download(self, object_name, path):
         dic = self.objects
         now_name = []
-        if not path.startswith('/'):
+        if not path.startswith(slash):
             path = self.default_path + path
         if os.path.isfile(path):
             print_err('Invalid local path.', file=sys.stderr)
             return
-        if path.endswith('/'):
+        if path.endswith(slash):
             path = path[0:len(path)-1]
         try:
             os.chdir(path)
         except FileNotFoundError:
             print_err('Invalid local path.')
             return
-        if not object_name.startswith('/'):
+        if not object_name.startswith(slash):
             for _slice in self.path:
                 dic = dic[_slice]
                 now_name.append(_slice)
-        for _slice in object_name.split('/'):
+        for _slice in object_name.split(slash):
             if _slice:
                 if _slice in dic.keys():
                     dic = dic[_slice]
@@ -150,9 +170,9 @@ class OSS:
                     print_err('Invalid remote path.')
                     return
         if dic:
-            self.download_dir(dic, now_name, path + '/' + now_name[-1])
+            self.download_dir(dic, now_name, path + slash + now_name[-1])
         else:
-            self.download_file('/'.join(now_name), path + '/' + now_name[-1])
+            self.download_file(slash.join(now_name), path + slash + now_name[-1])
 
     def print_bucket_info(self):
         print_info('name: ' + self.bucket_info.name)
@@ -183,7 +203,7 @@ class OSS:
             return
         dic = self.objects
         temp = []
-        if directory.startswith('/'):
+        if directory.startswith(slash):
             for _slice in directory.split('/'):
                 if _slice != '':
                     if _slice in dic.keys():
