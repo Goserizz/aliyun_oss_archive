@@ -68,7 +68,7 @@ def get_config_path():
     if os_name == 'Darwin' or os_name == 'Linux':
         return '/etc/oss/config.json'
     elif os_name == 'Windows':
-        return 'config.json'
+        return os.getcwd() + '//config.json'
     else:
         print_err('What the hell os you are using?')
         return
@@ -78,10 +78,8 @@ class OSS:
 
     def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
         self.config_path = get_config_path()
-        print_info('connecting to server...')
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
-        print_info('connected.')
         if not default_path.endswith(slash):
             self.default_path = default_path + slash
         else:
