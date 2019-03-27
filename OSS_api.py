@@ -359,3 +359,10 @@ class OSS:
                 print_info('<local>: ' + file + ' <remote>: ' + load_dic['files'][file])
         else:
             print_err('No sync file found. Try to use <set>.')
+
+    def refresh(self):
+        self.objects = {}
+        print_info('refreshing catalogs...')
+        for obj in oss2.ObjectIterator(self.bucket):
+            self.append_object(obj.key)
+        print_info('refreshed.')

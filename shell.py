@@ -47,16 +47,17 @@ while 1:
     elif indict[0] == 'info':
         oss.print_bucket_info()
     elif indict[0] == 'help':
-        print_info('dir')
-        print_info('cd <dir>')
-        print_info('rm <remote_path>')
-        print_info('ul <remote_path> <local_path> || ul <local_path>')
-        print_info('dl <remote_path> <local_path> || dl <remote_path>')
-        print_info('set <local_path> || set <local_path> <remote_path>')
-        print_info('sync <local_path> || sync')
-        print_info('dis <local_path>')
-        print_info('info || sync-info')
-        print_info('quit')
+        print_info('show content : dir')
+        print_info('change dir   : cd <dir>')
+        print_info('remove       : rm <remote_path>')
+        print_info('upload       : ul <remote_path> <local_path> || ul <local_path>')
+        print_info('download     : dl <remote_path> <local_path> || dl <remote_path>')
+        print_info('set sync     : set <local_path> || set <local_path> <remote_path>')
+        print_info('start sync   : sync <local_path> || sync')
+        print_info('disable sync : dis <local_path>')
+        print_info('get info     : info || sync-info')
+        print_info('quit         : quit')
+        print_info('refresh      : f5')
     elif indict[0] == 'set':
         if len(indict) == 3:
             oss.set_sync(indict[1], indict[2])
@@ -72,5 +73,7 @@ while 1:
     elif indict[0] == 'dis':
         if len(indict) == 2:
             oss.disable_sync(indict[1])
+    elif indict[0] == 'f5':
+        oss.refresh()
     elif indict[0] == 'quit':
         exit()

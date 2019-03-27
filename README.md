@@ -58,6 +58,10 @@ usage: help
 
 usage: quit
 
+> refresh: sync contents with remote
+
+usage: f5
+
 ### Configuration File: config.json  
 
 * 'access_key_id': <access_key_id>,  
