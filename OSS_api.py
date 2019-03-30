@@ -115,7 +115,7 @@ class OSS:
     def upload_directory(self, object_name, path):
         if not path.endswith(slash):
             if object_name:
-                object_name = object_name + slash + os.path.basename(path)
+                object_name = object_name + '/' + os.path.basename(path)
             else:
                 object_name = os.path.basename(path)
             path += slash
