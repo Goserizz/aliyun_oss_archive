@@ -33,7 +33,7 @@ while 1:
             oss.change_directory(indict[1])
     elif indict[0] == 'ul':
         if len(indict) == 2:
-            oss.upload(oss.now_path(), indict[1])
+            oss.upload('/' + oss.now_path(), indict[1])
         elif len(indict) == 3:
             oss.upload(indict[1], indict[2])
     elif indict[0] == 'rm':

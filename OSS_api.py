@@ -132,6 +132,8 @@ class OSS:
             path = self.default_path + path
         if not object_name.startswith('/') and self.now_path():
             object_name = self.now_path() + '/' + object_name
+        else:
+            object_name = object_name[1:]
         if os.path.isfile(path):
             self.upload_file(object_name, path)
         else:
