@@ -4,6 +4,7 @@ import sys
 import platform
 import oss2
 from termcolor import colored
+from md5 import file_md5
 
 
 os_name = platform.system()
@@ -107,10 +108,11 @@ class OSS:
             object_name = object_name + '/' + os.path.basename(path)
         else:
             object_name = os.path.basename(path)
-        print_info(path)
-        self.bucket.put_object_from_file(object_name, path, progress_callback=percentage)
-        print('')
-        self.append_object(object_name)
+        if not self.file_exists(object_name) or not file_md5(path) == self.file_info(object_name)['ETag'][1:-1]:
+            print_info(path)
+            self.bucket.put_object_from_file(object_name, path, progress_callback=percentage)
+            print('')
+            self.append_object(object_name)
 
     def upload_directory(self, object_name, path):
         if not path.endswith(slash):
@@ -146,11 +148,13 @@ class OSS:
                 print_err('Invalid grammar.')
                 return
             self.upload_directory(object_name, path)
+        print_info('Done.')
 
     def download_file(self, object_name, path):
-        print_info(path)
-        self.bucket.get_object_to_file(object_name, path, progress_callback=percentage)
-        print('')
+        if not os.path.isfile(path) or not file_md5(path) == self.file_info(object_name)['ETag'][1:-1]:
+            print_info(path)
+            self.bucket.get_object_to_file(object_name, path, progress_callback=percentage)
+            print('')
 
     def download_dir(self, dic, object_name, path):
         if not os.path.exists(path):
@@ -194,6 +198,7 @@ class OSS:
             self.download_dir(dic, now_name, path + slash + now_name[-1])
         else:
             self.download_file('/'.join(now_name), path + slash + now_name[-1])
+        print_info('Done')
 
     def print_bucket_info(self):
         print_info('name: ' + self.bucket_info.name)
@@ -281,6 +286,7 @@ class OSS:
                     return
         self.remove_directory_file(dic, remote_name)
         last_dic.pop(last_slice)
+        print_info('Done')
 
     def now_path(self):
         return '/'.join(self.path)
@@ -366,3 +372,32 @@ class OSS:
         for obj in oss2.ObjectIterator(self.bucket):
             self.append_object(obj.key)
         print_info('refreshed.')
+
+    def file_info(self, object_name):
+        return self.bucket.get_object_meta(object_name).headers
+
+    def print_file_info(self, object_name):
+        cursor = self.objects
+        if not object_name.startswith('/'):
+            for _slice in object_name.split('/'):
+                if _slice and _slice in cursor.keys():
+                    cursor = cursor[_slice]
+                else:
+                    print_err('Invalid Path')
+                    return
+            object_name = self.now_path() + '/' + object_name
+        else:
+            for _slice in self.path:
+                cursor = cursor[_slice]
+            for _slice in object_name.split('/'):
+                if _slice and _slice in cursor.keys():
+                    cursor = cursor[_slice]
+                else:
+                    print_err('Invalid Path')
+            object_name = object_name[1:]
+        headers = self.file_info(object_name)
+        for header in headers.keys():
+            print_info(header + ' : ' + headers[header])
+
+    def file_exists(self, object_name):
+        return self.bucket.object_exists(object_name)

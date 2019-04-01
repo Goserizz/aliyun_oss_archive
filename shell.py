@@ -75,5 +75,8 @@ while 1:
             oss.disable_sync(indict[1])
     elif indict[0] == 'f5':
         oss.refresh()
+    elif indict[0] == 'finfo':
+        if len(indict) == 2:
+            oss.print_file_info(indict[1])
     elif indict[0] == 'quit':
         exit()
