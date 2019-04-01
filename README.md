@@ -1,4 +1,7 @@
 # Aliyun OSS Archive
+### Use Shell:
+>python shell.py
+
 ### Basic Operations:
 
 >dir: show current dir's contents  
