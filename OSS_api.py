@@ -198,7 +198,7 @@ class OSS:
             self.download_dir(dic, now_name, path + slash + now_name[-1])
         else:
             self.download_file('/'.join(now_name), path + slash + now_name[-1])
-        print_info('Done')
+        print_info('Done.')
 
     def print_bucket_info(self):
         print_info('name: ' + self.bucket_info.name)
@@ -286,7 +286,7 @@ class OSS:
                     return
         self.remove_directory_file(dic, remote_name)
         last_dic.pop(last_slice)
-        print_info('Done')
+        print_info('Done.')
 
     def now_path(self):
         return '/'.join(self.path)

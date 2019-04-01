@@ -62,6 +62,10 @@ usage: quit
 
 usage: f5
 
+> file info: get file info from remote
+
+usage: finfo <remote_path>
+
 ### Configuration File: config.json  
 
 * 'access_key_id': <access_key_id>,  

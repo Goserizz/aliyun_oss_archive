@@ -58,6 +58,7 @@ while 1:
         print_info('get info     : info || sync-info')
         print_info('quit         : quit')
         print_info('refresh      : f5')
+        print_info('file info    : finfo <remote_path>')
     elif indict[0] == 'set':
         if len(indict) == 3:
             oss.set_sync(indict[1], indict[2])
