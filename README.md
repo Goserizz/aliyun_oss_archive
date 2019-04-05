@@ -82,6 +82,6 @@ usage: finfo <remote_path>
 
 - 'shell.py': Interactive bash-like program
 - 'manage.py': Used for executing one command a time
-- 'command.py': create a connector between program and terminal, use 'oss' to start shell.py or 'oss &lt;command&gt;' to start manage.py
-- 'OSS_api.py': more usable api generated from oss2 
-- md5.py: used to calculate md5 of local files
+- 'command.py': Aconnector between program and terminal, use 'oss' to start shell.py or 'oss &lt;command&gt;' to start manage.py
+- 'OSS_api.py': More usable api generated from oss2 
+- md5.py: Used to calculate md5 of local files
