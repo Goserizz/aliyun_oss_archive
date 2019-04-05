@@ -327,10 +327,8 @@ class OSS:
             except FileNotFoundError:
                 print_err('No such file or directory.')
                 return
-        if remote_path.startswith('/'):
-            remote_path = remote_path[1:]
-        else:
-            remote_path = self.now_path() + '/' + remote_path
+        if not remote_path.startswith('/'):
+            remote_path = '/' + self.now_path() + '/' + remote_path
         if path in files.keys() and files[path] != remote_path:
             if input_confirm(path + ' is already exist. Are you sure to change its remote path(' + files[path] + ')?(t/f)'):
                 files[path] = remote_path
@@ -338,8 +336,6 @@ class OSS:
             files[path] = remote_path
         with open(self.config_path, 'w') as f:
             json.dump(load_dic, f)
-        if not remote_path:
-            remote_path = '/'
         print_info('<local>' + path + ' <remote>' + remote_path)
 
     def disable_sync(self, path):

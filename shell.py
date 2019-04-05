@@ -2,17 +2,21 @@ from OSS_api import print_info, os_name, OSS
 import json
 
 
-def input_std(_input):
-    new_input = []
+def input_std(input_str):
+    if os_name != 'Windows':
+        indict = input('\033[0;32m' + input_str + '\033[0m').split(' ')
+    else:
+        indict = input(input_str).split(' ')
+    new_indict = []
     i = 0
-    while i < len(_input):
+    while i < len(indict):
         j = i + 1
-        while _input[i].endswith('\\') and j < len(_input):
-            _input[i] = _input[i][0:-1] + ' ' + _input[j]
+        while indict[i].endswith('\\') and j < len(indict):
+            indict[i] = indict[i][0:-1] + ' ' + indict[j]
             j += 1
-        new_input.append(_input[i])
+        new_indict.append(indict[i])
         i = j
-    return new_input
+    return new_indict
 
 
 def upload(oss, indict):
@@ -88,12 +92,7 @@ def shell(oss):
     oss.print_dir()
     while 1:
         print(oss.bucket_info.name, end=' ')
-        if os_name != 'Windows':
-            indict = input('\033[0;32m~/' + oss.now_path() + '\033[0m>').split(' ')
-        else:
-            indict = input('~/' + oss.now_path() + '>').split(' ')
-
-        indict = input_std(indict)
+        indict = input_std('~/' + oss.now_path() + '>')
 
         if indict[0] == 'dir':
             oss.print_dir()
