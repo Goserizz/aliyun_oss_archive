@@ -77,7 +77,7 @@ def get_config_path():
 
 class OSS:
 
-    def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path):
+    def __init__(self, access_key_id, access_key_secret, endpoint, bucket_name, default_path, catalog):
         self.config_path = get_config_path()
         self.auth = oss2.Auth(access_key_id, access_key_secret)
         self.bucket = oss2.Bucket(self.auth, endpoint, bucket_name)
@@ -85,12 +85,13 @@ class OSS:
             self.default_path = default_path + slash
         else:
             self.default_path = default_path
-        self.path = []
-        self.objects = dict()
-        print_info('Downloading catalogs...')
-        for obj in oss2.ObjectIterator(self.bucket):
-            self.append_object(obj.key)
-        print_info('Downloaded.\n')
+        if catalog:
+            self.path = []
+            self.objects = dict()
+            print_info('Downloading catalogs...')
+            for obj in oss2.ObjectIterator(self.bucket):
+                self.append_object(obj.key)
+            print_info('Downloaded.\n')
         self.bucket_info = self.bucket.get_bucket_info()
 
     def append_object(self, object_name):
@@ -108,7 +109,7 @@ class OSS:
             object_name = object_name + '/' + os.path.basename(path)
         else:
             object_name = os.path.basename(path)
-        if not self.file_exists(object_name) or not file_md5(path) == self.file_info(object_name)['ETag'][1:-1]:
+        if not self.file_exists(object_name) or file_md5(path) != self.file_info(object_name)['ETag'][1:-1]:
             print_info(path)
             self.bucket.put_object_from_file(object_name, path, progress_callback=percentage)
             print('')
@@ -400,4 +401,11 @@ class OSS:
             print_info(header + ' : ' + headers[header])
 
     def file_exists(self, object_name):
-        return self.bucket.object_exists(object_name)
+        dic = self.objects
+        for _slice in object_name.split('/'):
+            if _slice:
+                if _slice in dic.keys():
+                    dic = dic[_slice]
+                else:
+                    return False
+        return True
