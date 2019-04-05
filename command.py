@@ -9,7 +9,7 @@ with open(config_path, 'r') as f:
     load_dic = json.load(f)
 manage_path = load_dic['manage_path']
 while True:
-    indict = input_std('~>')
+    indict = input_std('command~>')
     if indict[0] != 'oss':
         continue
     os.system('python ' + manage_path + ' ' + ' '.join(indict[1:]))

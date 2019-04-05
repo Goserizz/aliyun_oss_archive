@@ -77,3 +77,11 @@ usage: finfo <remote_path>
 * 'bucket_name': <bucket_name>,  
 * 'default_path': <default_path>  // used for local path not started with '/'
 * 'files': {<local_path>: <remote_path>, …, <local_path>: <remote_path>}  // connections between local file and remote file, can be set/disabled in shell. Used in synchronizing.
+
+### Files
+
+- 'shell.py': Interactive bash-like program
+- 'manage.py': Used for executing one command a time
+- 'command.py': create a connector between program and terminal, use 'oss' to start shell.py or 'oss <command>' to start manage.py
+- 'OSS_api.py': more usable api generated from oss2 
+- md5.py: used to calculate md5 of local files
