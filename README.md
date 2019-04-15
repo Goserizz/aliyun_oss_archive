@@ -39,11 +39,11 @@ usage: set <local_path>  // connect <local_path> with cwd
 
 usage: set <local_path> <remote_path>
 
-> sync: synchronize connected files in 'files'(config.json)
+> push/pull : synchronize connected files in 'files'(config.json)
 
-usage: sync  // synchronize all
+usage: push/pull  // synchronize all
 
-usage: sync <local_path>  // sync <local_path> to remote if it's in 'files'(config.json)
+usage: push/pull <local_path>  // push/pull <local_path> to remote if it's in 'files'(config.json)
 
 > sync-info: print all connections in 'files'(config.json)
 

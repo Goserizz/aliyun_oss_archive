@@ -45,11 +45,18 @@ def set_sync(oss, indict):
         oss.set_sync(indict[1], '/' + oss.now_path())
 
 
-def sync(oss, indict):
+def push(oss, indict):
     if len(indict) == 1:
-        oss.sync('')
+        oss.sync('', True)
     elif len(indict) == 2:
-        oss.sync(indict[1])
+        oss.sync(indict[1], True)
+
+
+def pull(oss, indict):
+    if len(indict) == 1:
+        oss.sync('', False)
+    elif len(indict) == 2:
+        oss.sync(indict[1], False)
 
 
 def sync_info(oss, indict):
@@ -77,7 +84,8 @@ def help(manage):
     print_info('upload       : ul <remote_path> <local_path> || ul <local_path>')
     print_info('download     : dl <remote_path> <local_path> || dl <remote_path>')
     print_info('set sync     : set <local_path> || set <local_path> <remote_path>')
-    print_info('start sync   : sync <local_path> || sync')
+    print_info('start push   : push <local_path> || push')
+    print_info('start pull   : pull <local_path> || pull')
     print_info('disable sync : dis <local_path>')
     print_info('get info     : info || sync-info')
     print_info('file info    : finfo <remote_path>')
@@ -111,8 +119,10 @@ def shell(oss):
             help(False)
         elif indict[0] == 'set':
             set_sync(oss, indict)
-        elif indict[0] == 'sync':
-            sync(oss, indict)
+        elif indict[0] == 'push':
+            push(oss, indict)
+        elif indict[0] == 'pull':
+            pull(oss, indict)
         elif indict[0] == 'sync-info':
             sync_info(oss, indict)
         elif indict[0] == 'dis':

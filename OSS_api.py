@@ -105,6 +105,8 @@ class OSS:
                     dic = dic[_slice]
 
     def upload_file(self, object_name, path):
+        if os_name == 'Darwin' and os.path.basename(path) == '.DS_Store':
+            return
         if object_name:
             object_name = object_name + '/' + os.path.basename(path)
         else:
@@ -195,6 +197,9 @@ class OSS:
                 else:
                     print_err('Invalid remote path.')
                     return
+        print(object_name)
+        print('/'.join(now_name))
+        print(path + slash + now_name[-1])
         if dic:
             self.download_dir(dic, now_name, path + slash + now_name[-1])
         else:
@@ -292,7 +297,7 @@ class OSS:
     def now_path(self):
         return '/'.join(self.path)
 
-    def sync(self, sync_file):
+    def sync(self, sync_file, way):  # push: True, pull: False
         with open(self.config_path, 'r') as f:
             load_dic = json.load(f)
         if not 'files' in load_dic.keys():
@@ -302,7 +307,10 @@ class OSS:
             if not input_confirm('Are you sure to start sync?(t/f)'):
                 return
             for file in files.keys():
-                self.upload(files[file], file)
+                if way:
+                    self.upload(files[file], file)
+                else:
+                    self.download(files[file] + '/' + os.path.basename(file), os.path.dirname(file))
         else:
             if not is_abs_add(sync_file):
                 sync_file = self.default_path + sync_file
@@ -311,7 +319,10 @@ class OSS:
             else:
                 if not input_confirm('Are you sure to start sync?(t/f)'):
                     return
-                self.upload(files[sync_file], sync_file)
+                if way:
+                    self.upload(files[sync_file], sync_file)
+                else:
+                    self.download(files[sync_file] + '/' + os.path.basename(sync_file), os.path.dirname(sync_file))
 
     def set_sync(self, path, remote_path):
         with open(self.config_path, 'r') as f:

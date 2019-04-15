@@ -24,8 +24,10 @@ else:
         shell.remove(init_oss(True), indict)
     elif indict[0] == 'set':
         shell.set_sync(init_oss(True), indict)
-    elif indict[0] == 'sync':
-        shell.sync(init_oss(True), indict)
+    elif indict[0] == 'push':
+        shell.push(init_oss(True), indict)
+    elif indict[0] == 'pull':
+        shell.pull(init_oss(True), indict)
     elif indict[0] == 'sync-info':
         shell.sync_info(init_oss(False), indict)
     elif indict[0] == 'dis':
